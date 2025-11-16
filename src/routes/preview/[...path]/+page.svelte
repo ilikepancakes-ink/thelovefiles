@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 
-	$: path = $page.params.path;
-	$: contentType = '';
-	$: content = null;
+	let path: string = '';
+	let contentType: string = '';
+	let content: string | null = null;
+
+	$: path = $page.params.path || '';
 
 	async function loadFile() {
 		try {
@@ -65,26 +67,34 @@
 		display: flex;
 		flex-direction: column;
 		height: 100vh;
+		background: #111;
+		background-image:
+			linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px),
+			linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px);
+		background-size: 20px 20px;
+		color: #fff;
 	}
 
 	.download-bar {
-		background: #f5f5f5;
+		background: #222;
 		padding: 10px;
-		border-bottom: 1px solid #ddd;
+		border-bottom: 1px solid #444;
 		text-align: center;
 	}
 
 	.download-btn {
-		background: #007bff;
-		color: white;
-		padding: 10px 20px;
+		background: #333;
+		color: #fff;
+		padding: 12px 24px;
 		text-decoration: none;
-		border-radius: 5px;
+		border-radius: 8px;
 		font-weight: bold;
+		border: 1px solid #555;
+		transition: background 0.2s;
 	}
 
 	.download-btn:hover {
-		background: #0056b3;
+		background: #555;
 	}
 
 	.preview-content {
@@ -97,9 +107,11 @@
 		white-space: pre-wrap;
 		word-wrap: break-word;
 		font-family: monospace;
-		background: #f8f8f8;
+		background: #222;
+		color: #fff;
 		padding: 20px;
 		border-radius: 5px;
+		border: 1px solid #444;
 	}
 
 	.image-preview {
@@ -119,6 +131,6 @@
 	.unsupported-preview {
 		text-align: center;
 		padding: 50px;
-		color: #666;
+		color: #ccc;
 	}
 </style>

@@ -1,13 +1,20 @@
 <script lang="ts">
 	import type { Submission } from '$lib/db';
 
+	import type { FileItem } from '$lib/files';
+
 	let authPassword = '';
 	let isAuthenticated = false;
 	let submissions: Submission[] = [];
 	let selectedSubmission: Submission | null = null;
 	let message = '';
-	let selectedDirectory = 'thefiles'; // default
+	let selectedDirectory = 'thefiles'; // default for submissions
 	const directories = ['thefiles', 'thefiles/more', 'thefiles/photos', 'thefiles/screenshots', 'thefiles/vids'];
+	let selectedDirectoryFile = ''; // for file management, relative to thefiles
+	const fileDirectories = ['', 'more', 'photos', 'screenshots', 'vids'];
+	let files: FileItem[] = [];
+	let selectedFileIndex: number | null = null;
+	let newName = '';
 
 	async function authenticate() {
 		try {
@@ -18,7 +25,11 @@
 			});
 
 			if (response.ok) {
-				isAuthenticated = true;
+				const data = await response.json();
+				isAuthenticated = data.authorized;
+				if (data.sessionToken) {
+					localStorage.setItem('adminSessionToken', data.sessionToken);
+				}
 				authPassword = '';
 				await loadSubmissions();
 			} else {
@@ -30,10 +41,19 @@
 		}
 	}
 
+	async function getHeaders() {
+		const token = localStorage.getItem('adminSessionToken');
+		return {
+			'Content-Type': 'application/json',
+			...(token ? { 'Authorization': `Bearer ${token}` } : {})
+		};
+	}
+
 	async function loadSubmissions() {
 		try {
 			const response = await fetch('/manage?action=get_pending', {
-				method: 'POST'
+				method: 'POST',
+				headers: await getHeaders()
 			});
 
 			const result = await response.json();
@@ -50,7 +70,7 @@
 		try {
 			const response = await fetch('/manage?action=get_submission', {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+				headers: await getHeaders(),
 				body: JSON.stringify({ hash })
 			});
 
@@ -65,7 +85,7 @@
 		try {
 			const response = await fetch('/manage?action=approve', {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+				headers: await getHeaders(),
 				body: JSON.stringify({ hash, directory: selectedDirectory })
 			});
 
@@ -85,7 +105,7 @@
 		try {
 			const response = await fetch('/manage?action=deny', {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+				headers: await getHeaders(),
 				body: JSON.stringify({ hash })
 			});
 
@@ -103,6 +123,51 @@
 
 	function formatDate(dateStr: string) {
 		return new Date(dateStr).toLocaleString();
+	}
+
+	async function loadFiles() {
+		try {
+			const response = await fetch('/manage?action=list_files', {
+				method: 'POST',
+				headers: await getHeaders(),
+				body: JSON.stringify({ directory: selectedDirectoryFile })
+			});
+			const result = await response.json();
+			files = result.files || [];
+			message = '';
+		} catch (error) {
+			console.error('Load files error:', error);
+			message = 'Failed to load files';
+		}
+	}
+
+	async function startRename(index: number, file: FileItem) {
+		selectedFileIndex = index;
+		newName = file.name;
+	}
+
+	async function saveRename(file: FileItem) {
+		try {
+			const response = await fetch('/manage?action=rename_file', {
+				method: 'POST',
+				headers: await getHeaders(),
+				body: JSON.stringify({ directory: selectedDirectoryFile, oldName: file.name, newName })
+			});
+			if (response.ok) {
+				await loadFiles();
+				selectedFileIndex = null;
+				message = 'File renamed successfully';
+			} else {
+				message = 'Rename failed';
+			}
+		} catch (error) {
+			console.error('Rename error:', error);
+			message = 'Rename failed';
+		}
+	}
+
+	function cancelRename() {
+		selectedFileIndex = null;
 	}
 </script>
 
@@ -183,13 +248,46 @@
 			</div>
 		{/if}
 	</div>
+
+	<div class="file-management">
+		<h2>File Management</h2>
+		<div class="file-controls">
+			<label for="directory-file-select">Select Directory:</label>
+		<select id="directory-file-select" bind:value={selectedDirectoryFile}>
+			{#each fileDirectories as dir}
+				<option value={dir}>{dir === '' ? 'thefiles' : `thefiles/${dir}`}</option>
+			{/each}
+		</select>
+			<button on:click={loadFiles}>Load Files</button>
+		</div>
+
+		{#if files.length > 0}
+			<ul class="file-list">
+				{#each files as file, index}
+					<li class="file-item">
+						<span class="file-name">{file.name}</span>
+						{#if selectedFileIndex === index}
+							<input type="text" bind:value={newName} />
+							<button on:click={() => saveRename(file)}>Save</button>
+							<button on:click={cancelRename}>Cancel</button>
+						{:else}
+							<button on:click={() => startRename(index, file)}>Rename</button>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		{:else if files.length === 0 && message.includes('load')}
+			<p>No files loaded</p>
+		{/if}
+	</div>
 {/if}
 
 <style>
 	.message {
 		padding: 10px;
 		margin: 10px 0;
-		background: #f5f5f5;
+		background: #333;
+		color: #fff;
 		border-radius: 4px;
 	}
 
@@ -204,7 +302,8 @@
 	}
 
 	.submission-item {
-		border: 1px solid #ddd;
+		background: #222;
+		border: 1px solid #444;
 		padding: 15px;
 		margin: 10px 0;
 		border-radius: 4px;
@@ -214,8 +313,8 @@
 	}
 
 	.submission-item.selected {
-		background: #e8f4fd;
-		border-color: #2196f3;
+		background: #333;
+		border-color: #666;
 	}
 
 	.submission-info {
@@ -225,12 +324,12 @@
 	.hash {
 		font-family: monospace;
 		font-size: 14px;
-		color: #666;
+		color: #ccc;
 	}
 
 	.meta {
 		font-size: 12px;
-		color: #888;
+		color: #aaa;
 		margin-top: 5px;
 	}
 
@@ -241,7 +340,8 @@
 
 	.submission-detail {
 		flex: 1;
-		border: 1px solid #ddd;
+		background: #222;
+		border: 1px solid #444;
 		padding: 20px;
 		border-radius: 4px;
 		min-height: 400px;
@@ -252,10 +352,11 @@
 	}
 
 	.text-content {
-		background: #f9f9f9;
+		background: #333;
+		color: #fff;
 		padding: 15px;
 		border-radius: 4px;
-		border: 1px solid #eee;
+		border: 1px solid #444;
 		white-space: pre-wrap;
 		word-break: break-word;
 		max-height: 300px;
@@ -294,5 +395,47 @@
 
 	button:hover {
 		opacity: 0.9;
+	}
+
+	form div {
+		margin-bottom: 10px;
+	}
+
+	.file-management {
+		margin-top: 40px;
+	}
+
+	.file-controls {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin-bottom: 20px;
+	}
+
+	.file-list {
+		list-style: none;
+		padding: 0;
+	}
+
+	.file-list li {
+		background: #222;
+		border: 1px solid #444;
+		padding: 10px;
+		margin: 5px 0;
+		border-radius: 4px;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+
+	.file-name {
+		flex: 1;
+		font-weight: bold;
+	}
+
+	.file-item button {
+		margin-left: 10px;
+		padding: 5px 10px;
+		font-size: 12px;
 	}
 </style>

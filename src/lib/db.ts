@@ -44,7 +44,7 @@ export function addSubmission(hash: string, contentType: 'file' | 'text', file?:
         INSERT INTO submissions (hash, content_type, original_filename, content)
         VALUES (?, ?, ?, ?)
       `);
-      stmt.run(hash, contentType, file.name, file, function(err) {
+      stmt.run(hash, contentType, file.name, file, function(err: any) {
         stmt.finalize();
         if (err) reject(err);
         else resolve(hash);
@@ -54,7 +54,7 @@ export function addSubmission(hash: string, contentType: 'file' | 'text', file?:
         INSERT INTO submissions (hash, content_type, text_content)
         VALUES (?, ?, ?)
       `);
-      stmt.run(hash, contentType, text, function(err) {
+      stmt.run(hash, contentType, text, function(err: any) {
         stmt.finalize();
         if (err) reject(err);
         else resolve(hash);
@@ -126,7 +126,7 @@ export function approveSubmission(hash: string, destinationPath: string): Promis
         SET status = 'approved', approved_time = CURRENT_TIMESTAMP
         WHERE hash = ?
       `);
-      updateStmt.run(hash, function(err) {
+      updateStmt.run(hash, function(err: any) {
         updateStmt.finalize();
         if (err) {
           reject(err);

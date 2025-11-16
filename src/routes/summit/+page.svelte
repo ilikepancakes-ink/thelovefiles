@@ -55,5 +55,60 @@
 		<input type="file" id="file" on:change={handleFileChange}>
 	</div>
 
-	<button type="submit">Submit</button>
+	<button type="submit" class="submit-btn">Submit</button>
 </form>
+
+<style>
+	form {
+		background: #222;
+		padding: 20px;
+		border-radius: 8px;
+		border: 1px solid #444;
+		max-width: 500px;
+		margin-top: 20px;
+	}
+
+	div {
+		margin-bottom: 15px;
+	}
+
+	label {
+		color: #fff;
+		font-weight: bold;
+		margin-bottom: 5px;
+		display: block;
+	}
+
+	textarea {
+		width: 100%;
+		padding: 10px;
+		border: 1px solid #555;
+		border-radius: 4px;
+		background: #333;
+		color: #fff;
+		resize: vertical;
+		min-height: 100px;
+	}
+
+	input[type="file"] {
+		padding: 10px;
+		background: #333;
+		color: #fff;
+		border: 1px solid #555;
+		border-radius: 4px;
+	}
+
+	.submit-btn {
+		background: #007bff;
+		color: #fff;
+		border: none;
+		padding: 10px 20px;
+		border-radius: 4px;
+		cursor: pointer;
+		font-weight: bold;
+	}
+
+	.submit-btn:hover {
+		background: #0056b3;
+	}
+</style>

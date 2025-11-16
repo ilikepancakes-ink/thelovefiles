@@ -1,0 +1,52 @@
+import path from 'path';
+import { env } from '$env/dynamic/private';
+
+/**
+ * Sanitizes a file path to prevent directory traversal attacks
+ * @param requestedPath The path requested by the user
+ * @param baseDir The base directory (defaults to 'thefiles')
+ * @returns The sanitized absolute path, or null if invalid
+ */
+export function sanitizePath(requestedPath: string, baseDir: string = 'thefiles'): string | null {
+	try {
+		// Resolve the full path
+		const fullPath = path.resolve(process.cwd(), baseDir, requestedPath);
+
+		// Ensure the resolved path is within the base directory
+		const basePath = path.resolve(process.cwd(), baseDir);
+		const relative = path.relative(basePath, fullPath);
+
+		// Check if the resolved path is still within the base directory
+		if (relative.startsWith('..') || path.isAbsolute(relative)) {
+			return null;
+		}
+
+		return fullPath;
+	} catch (error) {
+		console.error('Path sanitization error:', error);
+		return null;
+	}
+}
+
+/**
+ * Verifies admin authentication from request headers
+ */
+export function verifyAdminAuth(request: Request): boolean {
+	const authHeader = request.headers.get('Authorization');
+	if (!authHeader || !authHeader.startsWith('Bearer ')) {
+		return false;
+	}
+
+	const token = authHeader.substring(7); // Remove "Bearer "
+	// Simple check - in production use proper JWT or session tokens
+	return token === 'admin-session-' + (env.MANAGE_PASSWORD || '');
+}
+
+/**
+ * Validates directory names to ensure they are safe
+ */
+export function isValidDirectory(dir: string): boolean {
+	// Allow only alphanumeric, dash, underscore, and forward slash
+	const safePattern = /^[a-zA-Z0-9\-_\/]*$/;
+	return safePattern.test(dir) && !dir.includes('..');
+}

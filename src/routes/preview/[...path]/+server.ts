@@ -3,13 +3,17 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 import { Stats } from 'fs';
 import mime from 'mime';
+import { sanitizePath } from '$lib/security';
 
 interface Params {
 	path: string;
 }
 
 export async function GET({ params }: { params: Params }) {
-	const filePath = path.join(process.cwd(), 'thefiles', params.path);
+	const filePath = sanitizePath(params.path);
+	if (!filePath) {
+		return new Response('Invalid path', { status: 400 });
+	}
 
 	try {
 		const stats: Stats = await new Promise((resolve, reject) => {
