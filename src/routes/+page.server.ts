@@ -1,9 +1,12 @@
 
-import { listFiles } from '$lib/files';
+import { listDirectory } from '$lib/files';
 
-export async function load() {
-	const files = await listFiles('/thefiles');
+export async function load({ url }) {
+	const dir = url.searchParams.get('dir') || '';
+	const dirPath = dir ? `./thefiles/${dir}` : './thefiles';
+	const files = await listDirectory(dirPath, './thefiles');
 	return {
-		files
+		files,
+		currentDir: dir
 	};
 }

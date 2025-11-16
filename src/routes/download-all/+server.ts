@@ -40,7 +40,7 @@ export async function GET() {
 			}
 		}
 
-		await addToArchive('/thefiles');
+		await addToArchive(path.join(process.cwd(), 'thefiles'));
 
 		const response = new Response(archive as any, {
 			headers: {

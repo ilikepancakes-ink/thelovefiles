@@ -8,7 +8,7 @@ interface Params {
 }
 
 export async function GET({ params }: { params: Params }) {
-	const filePath = path.join('/thefiles', params.path);
+	const filePath = path.join(process.cwd(), 'thefiles', params.path);
 
 	try {
 		const stats: Stats = await new Promise((resolve, reject) => {
