@@ -1,8 +1,14 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir, existsSync } from 'fs';
+import { promises as fs } from 'fs';
 
 const dbPath = path.join(process.cwd(), 'submissions.db');
+
+if (!existsSync(dbPath)) {
+  console.log('Database file not found, creating database...');
+}
+
 const db = new sqlite3.Database(dbPath);
 
 // Enable WAL mode for better concurrency
