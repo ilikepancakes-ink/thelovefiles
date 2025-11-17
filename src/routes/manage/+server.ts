@@ -71,7 +71,7 @@ export async function POST(event: RequestEvent) {
 					headers: { 'Content-Type': 'application/json' }
 				});
 			}
-			await approveSubmission(hash, 'thefiles/' + directory);
+			await approveSubmission(hash, directory);
 			return new Response(JSON.stringify({ success: true }), {
 				status: 200,
 				headers: { 'Content-Type': 'application/json' }
