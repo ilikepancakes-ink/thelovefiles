@@ -34,11 +34,16 @@ export function sanitizePath(requestedPath: string, baseDir: string = 'thefiles'
  */
 export function verifyAdminAuth(event: RequestEvent): boolean {
 	const token = event.cookies.get('adminSessionToken');
+	const expected = 'admin-session-' + (env.MANAGE_PASSWORD || '');
+	console.log('Verifying admin auth. Token:', token, 'Expected:', expected, 'Match:', token === expected);
 	if (!token) {
+		console.log('No token found');
 		return false;
 	}
 	// Simple check - in production use proper JWT or session tokens
-	return token === 'admin-session-' + (env.MANAGE_PASSWORD || '');
+	const isValid = token === expected;
+	console.log('Is valid:', isValid);
+	return isValid;
 }
 
 /**

@@ -19,6 +19,9 @@ export async function POST(event: RequestEvent) {
 
 		if (action === 'authorize') {
 			const { password } = await event.request.json();
+			console.log('Authorize attempt. Password provided. Env.MANAGE_PASSWORD:', env.MANAGE_PASSWORD);
+			const tokenValue = 'admin-session-' + (env.MANAGE_PASSWORD || '');
+			console.log('Token to set:', tokenValue);
 			if (password === env.MANAGE_PASSWORD) {
 				// Simple auth - in production use proper sessions
 				const isSecure = event.url.protocol === 'https:';
@@ -28,10 +31,11 @@ export async function POST(event: RequestEvent) {
 					status: 200,
 					headers: {
 						'Content-Type': 'application/json',
-						'Set-Cookie': `adminSessionToken=${'admin-session-' + env.MANAGE_PASSWORD}; HttpOnly; Path=/; Max-Age=3600${isSecure ? '; Secure' : ''}; SameSite=Lax`
+						'Set-Cookie': `adminSessionToken=${tokenValue}; HttpOnly; Path=/; Max-Age=3600${isSecure ? '; Secure' : ''}; SameSite=Lax`
 					}
 				});
 			} else {
+				console.log('Password mismatch');
 				return new Response(JSON.stringify({ error: 'Invalid password' }), {
 					status: 401,
 					headers: { 'Content-Type': 'application/json' }
