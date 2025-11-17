@@ -27,9 +27,6 @@
 			if (response.ok) {
 				const data = await response.json();
 				isAuthenticated = data.authorized;
-				if (data.sessionToken) {
-					localStorage.setItem('adminSessionToken', data.sessionToken);
-				}
 				authPassword = '';
 				await loadSubmissions();
 			} else {
@@ -41,19 +38,11 @@
 		}
 	}
 
-	async function getHeaders() {
-		const token = localStorage.getItem('adminSessionToken');
-		return {
-			'Content-Type': 'application/json',
-			...(token ? { 'Authorization': `Bearer ${token}` } : {})
-		};
-	}
-
 	async function loadSubmissions() {
 		try {
 			const response = await fetch('/manage?action=get_pending', {
 				method: 'POST',
-				headers: await getHeaders()
+				headers: { 'Content-Type': 'application/json' }
 			});
 
 			const result = await response.json();
@@ -70,7 +59,7 @@
 		try {
 			const response = await fetch('/manage?action=get_submission', {
 				method: 'POST',
-				headers: await getHeaders(),
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ hash })
 			});
 
@@ -85,7 +74,7 @@
 		try {
 			const response = await fetch('/manage?action=approve', {
 				method: 'POST',
-				headers: await getHeaders(),
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ hash, directory: selectedDirectory })
 			});
 
@@ -105,7 +94,7 @@
 		try {
 			const response = await fetch('/manage?action=deny', {
 				method: 'POST',
-				headers: await getHeaders(),
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ hash })
 			});
 
@@ -129,7 +118,7 @@
 		try {
 			const response = await fetch('/manage?action=list_files', {
 				method: 'POST',
-				headers: await getHeaders(),
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ directory: selectedDirectoryFile })
 			});
 			const result = await response.json();
@@ -150,7 +139,7 @@
 		try {
 			const response = await fetch('/manage?action=rename_file', {
 				method: 'POST',
-				headers: await getHeaders(),
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ directory: selectedDirectoryFile, oldName: file.name, newName })
 			});
 			if (response.ok) {

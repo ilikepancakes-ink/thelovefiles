@@ -7,26 +7,29 @@ import { rename } from 'fs/promises';
 import path from 'path';
 import { sanitizePath, verifyAdminAuth, isValidDirectory } from '$lib/security';
 
-export async function GET({ request }: RequestEvent) {
+export async function GET(event: RequestEvent) {
 	// This would be the admin dashboard - but for now we'll handle everything in the page
 	return new Response('Use the web interface', { status: 200 });
 }
 
-export async function POST({ request }: RequestEvent) {
+export async function POST(event: RequestEvent) {
 	try {
-		const url = new URL(request.url);
+		const url = new URL(event.request.url);
 		const action = url.searchParams.get('action');
 
 		if (action === 'authorize') {
-			const { password } = await request.json();
+			const { password } = await event.request.json();
 			if (password === env.MANAGE_PASSWORD) {
 				// Simple auth - in production use proper sessions
+				const isSecure = event.url.protocol === 'https:';
 				return new Response(JSON.stringify({
-					authorized: true,
-					sessionToken: 'admin-session-' + env.MANAGE_PASSWORD
+					authorized: true
 				}), {
 					status: 200,
-					headers: { 'Content-Type': 'application/json' }
+					headers: {
+						'Content-Type': 'application/json',
+						'Set-Cookie': `adminSessionToken=${'admin-session-' + env.MANAGE_PASSWORD}; HttpOnly; Path=/; Max-Age=3600${isSecure ? '; Secure' : ''}; SameSite=Lax`
+					}
 				});
 			} else {
 				return new Response(JSON.stringify({ error: 'Invalid password' }), {
@@ -37,7 +40,7 @@ export async function POST({ request }: RequestEvent) {
 		}
 
 		// Check authentication for all other actions
-		if (!verifyAdminAuth(request)) {
+		if (!verifyAdminAuth(event)) {
 			return new Response(JSON.stringify({ error: 'Unauthorized' }), {
 				status: 401,
 				headers: { 'Content-Type': 'application/json' }
@@ -51,14 +54,14 @@ export async function POST({ request }: RequestEvent) {
 				headers: { 'Content-Type': 'application/json' }
 			});
 		} else if (action === 'get_submission') {
-			const { hash } = await request.json();
+			const { hash } = await event.request.json();
 			const submission = await getSubmission(hash);
 			return new Response(JSON.stringify({ submission }), {
 				status: 200,
 				headers: { 'Content-Type': 'application/json' }
 			});
 		} else if (action === 'approve') {
-			const { hash, directory } = await request.json();
+			const { hash, directory } = await event.request.json();
 			// Validate directory
 			if (!isValidDirectory(directory)) {
 				return new Response(JSON.stringify({ error: 'Invalid directory' }), {
@@ -72,14 +75,14 @@ export async function POST({ request }: RequestEvent) {
 				headers: { 'Content-Type': 'application/json' }
 			});
 		} else if (action === 'deny') {
-			const { hash } = await request.json();
+			const { hash } = await event.request.json();
 			await denySubmission(hash);
 			return new Response(JSON.stringify({ success: true }), {
 				status: 200,
 				headers: { 'Content-Type': 'application/json' }
 			});
 		} else if (action === 'list_files') {
-			const { directory } = await request.json();
+			const { directory } = await event.request.json();
 			// Validate directory
 			if (directory && !isValidDirectory(directory)) {
 				return new Response(JSON.stringify({ error: 'Invalid directory' }), {
@@ -100,7 +103,7 @@ export async function POST({ request }: RequestEvent) {
 				headers: { 'Content-Type': 'application/json' }
 			});
 		} else if (action === 'rename_file') {
-			const { directory, oldName, newName } = await request.json();
+			const { directory, oldName, newName } = await event.request.json();
 			// Validate inputs
 			if (!isValidDirectory(directory) || oldName.includes('..') || newName.includes('..')) {
 				return new Response(JSON.stringify({ error: 'Invalid parameters' }), {

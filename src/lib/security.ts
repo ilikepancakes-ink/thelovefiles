@@ -1,4 +1,5 @@
 import path from 'path';
+import type { RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 
 /**
@@ -29,15 +30,13 @@ export function sanitizePath(requestedPath: string, baseDir: string = 'thefiles'
 }
 
 /**
- * Verifies admin authentication from request headers
+ * Verifies admin authentication from request cookies
  */
-export function verifyAdminAuth(request: Request): boolean {
-	const authHeader = request.headers.get('Authorization');
-	if (!authHeader || !authHeader.startsWith('Bearer ')) {
+export function verifyAdminAuth(event: RequestEvent): boolean {
+	const token = event.cookies.get('adminSessionToken');
+	if (!token) {
 		return false;
 	}
-
-	const token = authHeader.substring(7); // Remove "Bearer "
 	// Simple check - in production use proper JWT or session tokens
 	return token === 'admin-session-' + (env.MANAGE_PASSWORD || '');
 }
