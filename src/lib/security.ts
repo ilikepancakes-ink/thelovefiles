@@ -1,6 +1,5 @@
 import path from 'path';
 import type { RequestEvent } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
 
 /**
  * Sanitizes a file path to prevent directory traversal attacks
@@ -34,7 +33,7 @@ export function sanitizePath(requestedPath: string, baseDir: string = 'thefiles'
  */
 export function verifyAdminAuth(event: RequestEvent): boolean {
 	const token = event.cookies.get('adminSessionToken');
-	const expected = 'admin-session-' + (env.MANAGE_PASSWORD || '');
+	const expected = 'admin-session-' + (process.env.PASS || '');
 	console.log('Verifying admin auth. Token:', token, 'Expected:', expected, 'Match:', token === expected);
 	if (!token) {
 		console.log('No token found');

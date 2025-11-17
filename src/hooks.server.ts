@@ -1,3 +1,11 @@
+import { env } from '$env/dynamic/private';
+import type { Handle } from '@sveltejs/kit';
+
+// Check for required PASS environment variable in production
+if (env.NODE_ENV === 'production' && !process.env.PASS) {
+	throw new Error('PASS environment variable must be set in production. Please set it: export PASS=your_password');
+}
+
 // Simple rate limiting using Map (in production, use Redis or similar)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
@@ -25,7 +33,7 @@ function isRateLimited(clientIP: string): boolean {
 	return false;
 }
 
-export const handle = async ({ event, resolve }) => {
+export const handle: Handle = async ({ event, resolve }) => {
 	// Basic rate limiting
 	const clientIP = event.getClientAddress() || 'unknown';
 	if (isRateLimited(clientIP)) {

@@ -1,7 +1,5 @@
-import 'dotenv/config';
 import { getPendingSubmissions, getSubmission, approveSubmission, denySubmission } from '$lib/db';
 import type { RequestEvent } from './$types';
-import { env } from '$env/dynamic/private';
 import { listDirectory } from '$lib/files';
 import { rename } from 'fs/promises';
 import path from 'path';
@@ -19,10 +17,10 @@ export async function POST(event: RequestEvent) {
 
 		if (action === 'authorize') {
 			const { password } = await event.request.json();
-			console.log('Authorize attempt. Password provided. Env.MANAGE_PASSWORD:', env.MANAGE_PASSWORD);
-			const tokenValue = 'admin-session-' + (env.MANAGE_PASSWORD || '');
+			console.log('Authorize attempt. Password provided. Process.env.PASS:', process.env.PASS);
+			const tokenValue = 'admin-session-' + (process.env.PASS || '');
 			console.log('Token to set:', tokenValue);
-			if (password === env.MANAGE_PASSWORD) {
+			if (password === process.env.PASS) {
 				// Simple auth - in production use proper sessions
 				const isSecure = event.url.protocol === 'https:';
 				return new Response(JSON.stringify({
