@@ -1,5 +1,4 @@
 import { getPendingSubmissions, getSubmission, approveSubmission, denySubmission } from '$lib/db';
-import { fail } from '@sveltejs/kit';
 import type { RequestEvent } from './$types';
 import { env } from '$env/dynamic/private';
 import { listDirectory } from '$lib/files';
@@ -29,13 +28,19 @@ export async function POST({ request }: RequestEvent) {
 					headers: { 'Content-Type': 'application/json' }
 				});
 			} else {
-				return fail(401, { error: 'Invalid password' });
+				return new Response(JSON.stringify({ error: 'Invalid password' }), {
+					status: 401,
+					headers: { 'Content-Type': 'application/json' }
+				});
 			}
 		}
 
 		// Check authentication for all other actions
 		if (!verifyAdminAuth(request)) {
-			return fail(401, { error: 'Unauthorized' });
+			return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+				status: 401,
+				headers: { 'Content-Type': 'application/json' }
+			});
 		}
 
 		if (action === 'get_pending') {
@@ -55,7 +60,10 @@ export async function POST({ request }: RequestEvent) {
 			const { hash, directory } = await request.json();
 			// Validate directory
 			if (!isValidDirectory(directory)) {
-				return fail(400, { error: 'Invalid directory' });
+				return new Response(JSON.stringify({ error: 'Invalid directory' }), {
+					status: 400,
+					headers: { 'Content-Type': 'application/json' }
+				});
 			}
 			await approveSubmission(hash, 'thefiles/' + directory);
 			return new Response(JSON.stringify({ success: true }), {
@@ -73,11 +81,17 @@ export async function POST({ request }: RequestEvent) {
 			const { directory } = await request.json();
 			// Validate directory
 			if (directory && !isValidDirectory(directory)) {
-				return fail(400, { error: 'Invalid directory' });
+				return new Response(JSON.stringify({ error: 'Invalid directory' }), {
+					status: 400,
+					headers: { 'Content-Type': 'application/json' }
+				});
 			}
 			const dirPath = sanitizePath(directory || '');
 			if (!dirPath) {
-				return fail(400, { error: 'Invalid directory path' });
+				return new Response(JSON.stringify({ error: 'Invalid directory path' }), {
+					status: 400,
+					headers: { 'Content-Type': 'application/json' }
+				});
 			}
 			const files = await listDirectory(dirPath);
 			return new Response(JSON.stringify({ files }), {
@@ -88,11 +102,17 @@ export async function POST({ request }: RequestEvent) {
 			const { directory, oldName, newName } = await request.json();
 			// Validate inputs
 			if (!isValidDirectory(directory) || oldName.includes('..') || newName.includes('..')) {
-				return fail(400, { error: 'Invalid parameters' });
+				return new Response(JSON.stringify({ error: 'Invalid parameters' }), {
+					status: 400,
+					headers: { 'Content-Type': 'application/json' }
+				});
 			}
 			const dirPath = sanitizePath(directory || '');
 			if (!dirPath) {
-				return fail(400, { error: 'Invalid directory path' });
+				return new Response(JSON.stringify({ error: 'Invalid directory path' }), {
+					status: 400,
+					headers: { 'Content-Type': 'application/json' }
+				});
 			}
 			const oldPath = path.resolve(dirPath, oldName);
 			const newPath = path.resolve(dirPath, newName);
@@ -103,9 +123,15 @@ export async function POST({ request }: RequestEvent) {
 			});
 		}
 
-		return fail(400, { error: 'Unknown action' });
+		return new Response(JSON.stringify({ error: 'Unknown action' }), {
+			status: 400,
+			headers: { 'Content-Type': 'application/json' }
+		});
 	} catch (error) {
 		console.error('Error in manage POST:', error);
-		return fail(500, { error: 'Internal server error' });
+		return new Response(JSON.stringify({ error: 'Internal server error' }), {
+			status: 500,
+			headers: { 'Content-Type': 'application/json' }
+		});
 	}
 }
