@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { getPendingSubmissions, getSubmission, approveSubmission, denySubmission } from '$lib/db';
 import type { RequestEvent } from './$types';
 import { env } from '$env/dynamic/private';
