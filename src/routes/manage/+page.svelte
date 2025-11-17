@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import type { Submission } from '$lib/db';
 
 	import type { FileItem } from '$lib/files';
@@ -9,12 +10,13 @@
 	let selectedSubmission: Submission | null = null;
 	let message = '';
 	let selectedDirectory = 'thefiles'; // default for submissions
-	const directories = ['thefiles', 'thefiles/more', 'thefiles/photos', 'thefiles/screenshots', 'thefiles/vids'];
+	let directories: string[] = ['thefiles', 'thefiles/more', 'thefiles/photos', 'thefiles/screenshots', 'thefiles/vids']; // fallback static
 	let selectedDirectoryFile = ''; // for file management, relative to thefiles
-	const fileDirectories = ['', 'more', 'photos', 'screenshots', 'vids'];
+	let fileDirectories: string[] = ['', 'more', 'photos', 'screenshots', 'vids']; // fallback static
 	let files: FileItem[] = [];
 	let selectedFileIndex: number | null = null;
 	let newName = '';
+	let directoryRefreshInterval: any = null;
 
 	async function authenticate() {
 		try {
@@ -28,7 +30,10 @@
 				const data = await response.json();
 				isAuthenticated = data.authorized;
 				authPassword = '';
-				await loadSubmissions();
+				await Promise.all([loadSubmissions(), loadDirectories()]);
+				// Set up auto-refresh every 30 seconds
+				if (directoryRefreshInterval) clearInterval(directoryRefreshInterval);
+				directoryRefreshInterval = setInterval(loadDirectories, 30000);
 			} else {
 				message = 'Invalid password';
 			}
@@ -158,6 +163,29 @@
 	function cancelRename() {
 		selectedFileIndex = null;
 	}
+
+	async function loadDirectories() {
+		try {
+			const response = await fetch('/manage?action=list_directories', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' }
+			});
+			if (response.ok) {
+				const result = await response.json();
+				const dirNames = result.directories || [];
+				// Create full paths for submissions and relative for file management
+				directories = ['thefiles', ...dirNames.map((d: string) => `thefiles/${d}`)];
+				fileDirectories = ['', ...dirNames];
+			} else {
+				throw new Error('Failed to load directories');
+			}
+		} catch (error) {
+			console.error('Load directories error:', error);
+			// Keep fallback directories on error
+		}
+	}
+
+
 </script>
 
 {#if !isAuthenticated}

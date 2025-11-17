@@ -1,6 +1,6 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
-import { writeFile, mkdir, existsSync } from 'fs';
+import { existsSync } from 'fs';
 import { promises as fs } from 'fs';
 
 const dbPath = path.join(process.cwd(), 'submissions.db');
@@ -108,22 +108,35 @@ export function approveSubmission(hash: string, destinationPath: string): Promis
         return;
       }
 
-      // Determine filename and path for thefile
-      const destinationDir = path.join(process.cwd(), destinationPath);
-      await mkdir(destinationDir, { recursive: true });
+      // Determine filename
       let filename = submission.original_filename || hash;
-
       if (submission.content_type === 'text' && !filename.endsWith('.txt')) {
         filename += '.txt';
       }
 
-      const filePath = path.join(destinationDir, filename);
+      // Check for temp file first
+      const tempDir = path.join(process.cwd(), 'thefiles', 'temp');
+      const tempFileName = submission.content_type === 'file' ? (submission.original_filename || hash) : `${hash}.txt`;
+      const tempPath = path.join(tempDir, tempFileName);
 
-      // Write content to thefiles
-      if (submission.content_type === 'file' && submission.content) {
-        await writeFile(filePath, submission.content);
-      } else if (submission.content_type === 'text' && submission.text_content) {
-        await writeFile(filePath, submission.text_content);
+      const destinationDir = path.join(process.cwd(), destinationPath);
+      await fs.mkdir(destinationDir, { recursive: true });
+      const destinationFilePath = path.join(destinationDir, filename);
+
+      try {
+        await fs.access(tempPath); // Check if temp file exists
+        // Move temp file to destination
+        await fs.rename(tempPath, destinationFilePath);
+      } catch (tempFileError) {
+        // Temp file doesn't exist, create from DB content
+        if (submission.content_type === 'file' && submission.content) {
+          await fs.writeFile(destinationFilePath, submission.content);
+        } else if (submission.content_type === 'text' && submission.text_content) {
+          await fs.writeFile(destinationFilePath, submission.text_content);
+        } else {
+          reject(new Error('No content available for submission'));
+          return;
+        }
       }
 
       // Update status to approved

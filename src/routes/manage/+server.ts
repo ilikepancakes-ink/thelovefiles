@@ -104,6 +104,18 @@ export async function POST(event: RequestEvent) {
 				status: 200,
 				headers: { 'Content-Type': 'application/json' }
 			});
+		} else if (action === 'list_directories') {
+			// Lists subdirectories of thefiles
+			const baseDir = sanitizePath('') || 'thefiles';
+			const allFiles = await listDirectory(baseDir);
+			// Filter for directories only
+			const directories = allFiles
+				.filter((item: any) => item.type === 'directory')
+				.map((item: any) => item.name);
+			return new Response(JSON.stringify({ directories }), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' }
+			});
 		} else if (action === 'rename_file') {
 			const { directory, oldName, newName } = await event.request.json();
 			// Validate inputs

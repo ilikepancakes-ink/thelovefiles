@@ -2,6 +2,8 @@ import { randomBytes } from 'crypto';
 import { fail } from '@sveltejs/kit';
 import { addSubmission } from '$lib/db';
 import type { RequestEvent } from './$types';
+import path from 'path';
+import { promises as fs } from 'fs';
 
 export async function POST({ request }: RequestEvent) {
 	try {
@@ -16,12 +18,20 @@ export async function POST({ request }: RequestEvent) {
 		// Generate random hash for ID
 		const hash = randomBytes(16).toString('hex');
 
+		const tempDir = path.join(process.cwd(), 'thefiles', 'temp');
+		await fs.mkdir(tempDir, { recursive: true });
+
 		if (file) {
-			// Store file submission in database
+			// Store file submission in database and temp file
 			await addSubmission(hash, 'file', file);
+			const tempPath = path.join(tempDir, file.name || hash);
+			const buffer = await file.arrayBuffer();
+			await fs.writeFile(tempPath, Buffer.from(buffer));
 		} else if (text) {
-			// Store text submission in database
+			// Store text submission in database and create temp text file
 			await addSubmission(hash, 'text', undefined, text);
+			const tempPath = path.join(tempDir, `${hash}.txt`);
+			await fs.writeFile(tempPath, text);
 		}
 
 		return new Response(JSON.stringify({ hash, success: true }), {
