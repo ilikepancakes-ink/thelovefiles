@@ -15,6 +15,10 @@ export async function POST({ request }: RequestEvent) {
 			return fail(400, { error: 'No content provided' });
 		}
 
+		if (file && file.size > 5 * 1024 * 1024 * 1024) { // 5 GB
+			return fail(413, { error: 'File too large. Maximum size is 5 GB.' });
+		}
+
 		// Generate random hash for ID
 		const hash = randomBytes(16).toString('hex');
 
