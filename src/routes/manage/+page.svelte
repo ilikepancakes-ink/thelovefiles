@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import type { Submission } from '$lib/db';
 
-	import type { FileItem } from '$lib/files';
+	import type { FileItem } from '$lib/file-utils';
 
 	let authPassword = '';
 	let isAuthenticated = false;

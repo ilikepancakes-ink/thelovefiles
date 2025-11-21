@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatFileSize } from '$lib/files';
+	import { formatFileSize } from '$lib/file-utils';
 
 	let textContent = '';
 	let file: File | null = null;

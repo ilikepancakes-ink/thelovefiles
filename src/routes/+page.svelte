@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { FileItem } from '$lib/files';
+	import type { FileItem } from '$lib/file-utils';
 	import { goto } from '$app/navigation';
 
 	interface PageData {
