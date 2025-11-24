@@ -1,13 +1,7 @@
 import { readdir, stat } from 'fs/promises';
 import path from 'path';
 
-export function formatFileSize(bytes: number): string {
-	if (bytes === 0) return '0 B';
-	const k = 1024;
-	const sizes = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
-	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
+
 
 export interface FileItem {
 	name: string;
@@ -38,7 +32,7 @@ export async function listFiles(dirPath: string, basePath: string = dirPath): Pr
 	} catch (error) {
 		console.error(`Error reading directory ${dirPath}:`, error);
 	}
-	return items;
+	return items.filter(item => !item.name.endsWith('.thumbnail.jpg'));
 }
 
 export async function listDirectory(dirPath: string, basePath: string = dirPath): Promise<FileItem[]> {
@@ -58,5 +52,5 @@ export async function listDirectory(dirPath: string, basePath: string = dirPath)
 	} catch (error) {
 		console.error(`Error reading directory ${dirPath}:`, error);
 	}
-	return items;
+	return items.filter(item => !item.name.endsWith('.thumbnail.jpg'));
 }

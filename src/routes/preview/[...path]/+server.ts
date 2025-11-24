@@ -10,7 +10,7 @@ interface Params {
 	path: string;
 }
 
-export async function GET({ params }: { params: Params }) {
+export async function GET({ params, url }: { params: Params; url: URL }) {
 	const filePath = sanitizePath(params.path);
 	if (!filePath) {
 		return new Response('Invalid path', { status: 400 });
@@ -26,12 +26,13 @@ export async function GET({ params }: { params: Params }) {
 
 		if (stats.isFile()) {
 			const mimeType = mime.getType(filePath) || 'application/octet-stream';
-			if (mimeType.startsWith('video/')) {
+			const isThumb = url.searchParams.get('thumb') !== null;
+			if (mimeType.startsWith('video/') && isThumb) {
 				// Generate thumbnail for video
 				const thumbnailPath = filePath + '.thumbnail.jpg';
 				try {
 					await new Promise<void>((resolve, reject) => {
-						const ffmpeg = spawn('ffmpeg', ['-i', filePath, '-frames:v', '1', '-q:v', '2', thumbnailPath]);
+						const ffmpeg = spawn('ffmpeg', ['-ss', '0', '-i', filePath, '-frames:v', '1', '-q:v', '2', thumbnailPath]);
 						ffmpeg.on('close', (code) => {
 							if (code === 0) resolve();
 							else reject(new Error('ffmpeg failed'));
@@ -53,8 +54,9 @@ export async function GET({ params }: { params: Params }) {
 					});
 					return response;
 				} catch (error) {
-					// Fallback to serving the video
+					// Thumbnail generation failed, return error for img src
 					console.log('Failed to generate thumbnail:', error);
+					return new Response('Thumbnail generation failed', { status: 500 });
 				}
 			}
 			// Serve original file

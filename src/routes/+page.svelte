@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { FileItem } from '$lib/file-utils';
+	import { formatFileSize } from '$lib/file-utils';
 	import { goto } from '$app/navigation';
 
 	interface PageData {
@@ -20,6 +21,11 @@
 	function isImage(name: string): boolean {
 		const ext = name.split('.').pop()?.toLowerCase() || '';
 		return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'tiff', 'ico'].includes(ext);
+	}
+
+	function isVideo(name: string): boolean {
+		const ext = name.split('.').pop()?.toLowerCase() || '';
+		return ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm', 'm4v', '3gp', 'ogv'].includes(ext);
 	}
 </script>
 
@@ -48,14 +54,14 @@
 					<div class="file-icon folder"></div>
 					<a href="?dir={file.path}">{file.name}</a>
 				{:else}
-					{#if isImage(file.name)}
-						<img src="/preview/{file.path}" alt="{file.name}" class="file-icon image-preview"/>
+					{#if isImage(file.name) || isVideo(file.name)}
+						<img src="/preview/{file.path}{isVideo(file.name) ? '?thumb=1' : ''}" alt="{file.name}" class="file-icon image-preview"/>
 					{:else}
 						<div class="file-icon file"></div>
 					{/if}
 					<a href="/preview/{file.path}">{file.name}</a>
 					{#if file.size !== undefined}
-						<span class="file-size">({file.size} bytes)</span>
+						<span class="file-size">({formatFileSize(file.size)})</span>
 					{/if}
 				{/if}
 			</div>

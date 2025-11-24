@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
 
 	let path: string = '';
 	let contentType: string = '';
@@ -25,9 +26,11 @@
 		}
 	}
 
-	$: if (path) {
-		loadFile();
-	}
+	onMount(() => {
+		if (path) {
+			loadFile();
+		}
+	});
 </script>
 
 <svelte:head>

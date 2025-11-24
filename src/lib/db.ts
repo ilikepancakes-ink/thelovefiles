@@ -41,16 +41,17 @@ export interface Submission {
   approved_time?: string;
 }
 
-export function addSubmission(hash: string, contentType: 'file' | 'text', file?: File, text?: string): Promise<string> {
-  return new Promise((resolve, reject) => {
+export async function addSubmission(hash: string, contentType: 'file' | 'text', file?: File, text?: string): Promise<string> {
+  return new Promise(async (resolve, reject) => {
     let stmt: sqlite3.Statement;
 
     if (contentType === 'file' && file) {
+      const buffer = await file.arrayBuffer();
       stmt = db.prepare(`
         INSERT INTO submissions (hash, content_type, original_filename, content)
         VALUES (?, ?, ?, ?)
       `);
-      stmt.run(hash, contentType, file.name, file, function(err: any) {
+      stmt.run(hash, contentType, file.name, Buffer.from(buffer), function(err: any) {
         stmt.finalize();
         if (err) reject(err);
         else resolve(hash);
