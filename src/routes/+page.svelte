@@ -29,10 +29,10 @@
 	}
 </script>
 
-<h1>The Love Files</h1>
-<p>Welcome to everything we have on love :3</p>
+<h1>The Epstian/h1>
+<p>Welcome to everything made public about the kid touching bandits</p>
 <hr>
-<b>NOTE FOR LEGAL REASONS THIS IS ALL ALLEGED AND NOTHING HERE IS MARKETED AS THE TRUTH</b>
+
 
 <button class="nav-btn" on:click={() => goto('/summit')}>Summit to the Files!</button>
 
